@@ -1,0 +1,25 @@
+name: Tag Trigger
+
+on:
+  push:
+    tags:
+      - "v*" # v1.0, v1.1
+
+jobs:
+  trigger-repo-b-workflow:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository A
+        uses: actions/checkout@v2
+
+      - name: Capture tag name
+        id: capture_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_ENV
+
+      - name: Trigger workflow in Repo B
+        run: |
+          curl -X POST \
+            -H "Authorization: token ${{ secrets.PERSONAL_ACCESS_TOKEN }}" \
+            -d '{"ref": "main", "inputs": {"tag": "${{ env.TAG_NAME }}"}}' \
+            https://api.github.com/repos/OWNER_B/REPO_B/actions/workflows/WORKFLOW_FILE_NAME.yml/dispatches
